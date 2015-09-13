@@ -1,6 +1,7 @@
 # Framebuffer wrapper, ported from Python's https://github.com/cgoldberg/xvfbwrapper
 module XvfbWrapper
 export Xvfb, start!, stop!
+using Compat
 
 type Xvfb
     width ::Int
@@ -60,7 +61,7 @@ _redirect_display(display_num) = ENV["DISPLAY"] = ":$(display_num)"
 _lock_files() = filter(x->ismatch(r"\.X[0-9]+-lock",x),readdir("/tmp/"))
 
 function search_for_free_display()
-    ls = [parse(Int,split(file_name,['X','-'])[2]) for file_name=_lock_files()]
+    ls = [@compat parse(Int,split(file_name,['X','-'])[2]) for file_name=_lock_files()]
     min_display_num = 1000
     if length(ls) > 0
         display_num = max(min_display_num, max(0, ls...) + 1)
