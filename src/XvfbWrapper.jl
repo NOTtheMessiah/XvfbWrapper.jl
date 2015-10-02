@@ -8,22 +8,22 @@ type Xvfb
     height ::Int
     colordepth ::Int
     exec ::Array{ByteString,1}
-    proc # Nullable(Base.Process) or Union{None,Base.Process}?
+    proc # Nullable(Base.Process) or Union{Union{},Base.Process}?
     oldDisplayNum::Int
     vDisplayNum::Int
 end
 
 function Xvfb(width=800, height=680, colordepth=24; args...)
     bashargs = mapreduce( x->[string("-",x[1]),x[2]], append!, [], args)
-    exec = ["-screen", "0", "$(width)x$(height)x$(colordepth)", bashargs ]
+    exec = ["-screen"; "0"; "$(width)x$(height)x$(colordepth)"; bashargs ]
     oldDisplayNum = 0
     oldDisplayNum = try parse(Int,split(ENV["DISPLAY"],':')[2]) end
-    proc = None
+    proc = Union{}
   return Xvfb(width, height, colordepth, exec, proc, oldDisplayNum, oldDisplayNum )
 end
 
 function start!(fb::Xvfb)
-    if fb.proc == None
+    if fb.proc == Union{}
         fb.vDisplayNum = search_for_free_display()
         prepend!( fb.exec , ["Xvfb", ":$(fb.vDisplayNum)"] )
 
@@ -34,7 +34,7 @@ function start!(fb::Xvfb)
             _redirect_display(fb.vDisplayNum)
         else
             _redirect_display(fb.oldDisplayNum)
-            fb.proc = None
+            fb.proc = Union{} 
             error("Xvfb did not start, exitcode = ", fb.proc.exitcode)
         end
     else
@@ -43,15 +43,15 @@ function start!(fb::Xvfb)
 end
 
 function stop!(fb)
-    if fb.proc == None
+    if fb.proc == Union{}
         error("framebuffer process already stopped")
     else
         _redirect_display(fb.oldDisplayNum)
         fb.exec = fb.exec[3:end]
-        if fb.proc != None
+        if fb.proc != Union{}
             kill( fb.proc )
             wait( fb.proc )
-            fb.proc = None
+            fb.proc = Union{}
         end
     end
 end
